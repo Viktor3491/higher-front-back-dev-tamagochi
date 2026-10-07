@@ -6,18 +6,18 @@ class GameError(Exception):
 
 
 class NotEnoughMoney(GameError):
-    """Недостаточно монет для совершения покупки."""
+    """Недостаточно монет для покупки."""
 
 
 class NoFoodInBag(GameError):
-    """В сумке нет еды, чтобы покормить питомца."""
+    """В сумке нет такой еды."""
 
 
 class NoMedicineInBag(GameError):
-    """В сумке нет лекарств, чтобы вылечить питомца."""
+    """В сумке нет такого лекарства."""
 
 
-class MedicineAlreadyUsed(GameError):
+class MedicineIsEmpty(GameError):
     """Лекарство израсходовано полностью."""
 
 

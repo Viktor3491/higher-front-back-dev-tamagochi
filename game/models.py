@@ -29,10 +29,7 @@ class Medicine:
     uses: int = 0
 
     def is_empty(self) -> bool:
-        """Проверить, закончилось ли лекарство.
-
-        :return: True, если использование закончилось, иначе False.
-        """
+        """Проверить, закончилось лекарство или нет."""
         return self.uses >= self.number_of_uses
 
     def __repr__(self) -> str:

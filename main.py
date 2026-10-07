@@ -1,5 +1,6 @@
 """Точка входа в игру «Тамагочи-кликер»."""
 import os
+from typing import Any
 
 from game.clicker import SimpleRandomClicker
 from game.exceptions import (
@@ -11,10 +12,56 @@ from game.game import SimpleGame
 from game.models import Food, Medicine
 from game.tamagochi import SimpleTamagochi
 
+MENU = (
+    '1. Пойти на работу',
+    '2. Купить еду',
+    '3. Купить лекарство',
+    '4. Покормить',
+    '5. Вылечить',
+    '6. Играть',
+    '7. Отдых',
+    '0. Выход',
+)
+
+INFO_TEMPLATE = (
+    'Сумка с едой: {food}\n'
+    'Сумка с лекарствами: {medicine}\n'
+    '\nСтатус: голод {hunger}, усталость {fatigue}, '
+    'здоровье {hp}, энергия {energy}, монет {coins}'
+)
+
+SICK_WARNING = (
+    '======= Тамагочи болеет =======\n'
+    '==== Отдых действует менее эффективно ===='
+)
+
 
 def clear_screen() -> None:
     """Очистить консоль (кроссплатформенно)."""
     os.system('cls' if os.name == 'nt' else 'clear')
+
+
+def choose_item(options: list[Any]) -> Any | None:
+    """Показать список и дать игроку выбрать элемент."""
+    if not options:
+        return None
+    for index, item in enumerate(options, start=1):
+        print(f'{index}. {item}')
+    try:
+        number = int(input('Введите номер: '))
+    except ValueError:
+        return None
+    if 1 <= number <= len(options):
+        return options[number - 1]
+    return None
+
+
+def render_info(game: SimpleGame) -> str:
+    """Сформировать текстовое состояние игры."""
+    status = game.get_status()
+    status['food'] = game.food
+    status['medicine'] = game.medicine
+    return INFO_TEMPLATE.format(**status)
 
 
 def main() -> None:
@@ -47,30 +94,12 @@ def main() -> None:
 
     while True:
         print(output)
-        print(f'Сумка с едой: {game.food}')
-        print(f'Сумка с лекарствами: {game.medicine}')
-
-        status = game.get_status()
-        print(
-            f"\nСтатус: голод {status['hunger']}, "
-            f"усталость {status['fatigue']}, "
-            f"здоровье {status['hp']}, "
-            f"энергия {status['energy']}, "
-            f"монет {status['coins']}\n"
-        )
+        print(render_info(game))
 
         if game.tamagochi.is_sick():
-            print('======= Тамагочи болеет =======')
-            print('==== Отдых действует менее эффективно ====')
+            print(SICK_WARNING)
 
-        print('1. Пойти на работу')
-        print('2. Купить еду')
-        print('3. Купить лекарство')
-        print('4. Покормить')
-        print('5. Вылечить')
-        print('6. Играть')
-        print('7. Отдых')
-        print('0. Выход')
+        print(MENU)
 
         action = input('Выберите действие: ')
 
@@ -78,20 +107,35 @@ def main() -> None:
             match action:
                 case '1':
                     income = game.work()
-                    game.tamagochi.update()
                     output = f'Вы заработали {income} монет'
                 case '2':
-                    game.buy_food()
-                    output = 'Еда куплена'
+                    food = choose_item(game.shop_food)
+                    if food is None:
+                        output = 'Покупка отменена'
+                    else:
+                        game.buy_food(food)
+                        output = f'Куплено: {food.name}'
                 case '3':
-                    game.buy_medicine()
-                    output = 'Лекарство куплено'
+                    medicine = choose_item(game.shop_medicine)
+                    if medicine is None:
+                        output = 'Покупка отменена'
+                    else:
+                        game.buy_medicine(medicine)
+                        output = f'Куплено: {medicine.name}'
                 case '4':
-                    game.feed_tamagochi()
-                    output = 'Питомец накормлен'
+                    food = choose_item(game.food)
+                    if food is None:
+                        output = 'Кормление отменено'
+                    else:
+                        game.feed_tamagochi(food)
+                        output = f'Питомец съел {food.name}'
                 case '5':
-                    game.heal_tamagochi()
-                    output = 'Питомец вылечен'
+                    medicine = choose_item(game.medicine)
+                    if medicine is None:
+                        output = 'Лечение отменено'
+                    else:
+                        game.heal_tamagochi(medicine)
+                        output = f'Питомец вылечен {medicine.name}'
                 case '6':
                     game.play_with_tamagochi()
                     output = 'Вы поиграли с питомцем'
